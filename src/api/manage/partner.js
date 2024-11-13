@@ -42,3 +42,10 @@ export function delPartner(id) {
     method: 'delete'
   })
 }
+//重置合作商密码
+export function resetPartnerPwd(id){
+  return request({
+    url: '/manage/partner/resetPwd/' + id,
+    method: 'put'
+  })
+}
