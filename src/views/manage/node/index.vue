@@ -71,13 +71,13 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" type="index" width="50" align="center" prop="id" />
       <el-table-column label="点位名称" align="center" prop="nodeName" />
-      <el-table-column label="区域搜索" align="center" prop="regionId" />
+      <el-table-column label="所在区域" align="center" prop="region.regionName" />
       <el-table-column label="商圈类型" align="center" prop="businessType">
         <template #default="scope">
           <dict-tag :options="business_type" :value="scope.row.businessType"/>
         </template>
       </el-table-column>
-      <el-table-column label="合作商" align="center" prop="partnerId" />
+      <el-table-column label="合作商" align="center" prop="partner.partnerName" />
       <el-table-column label="详细地址" align="left" prop="address" show-overflow-tooltip />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
