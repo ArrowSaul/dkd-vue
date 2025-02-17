@@ -59,18 +59,18 @@
 
     <el-table v-loading="loading" :data="policyList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="策略id" align="center" prop="policyId" />
+      <el-table-column label="序号" type="index" align="center" prop="policyId" />
       <el-table-column label="策略名称" align="center" prop="policyName" />
-      <el-table-column label="策略方案，如：80代表8折" align="center" prop="discount" />
+      <el-table-column label="策略方案" align="center" prop="discount" />
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template #default="scope">
-          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['manage:policy:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['manage:policy:remove']">删除</el-button>
+          <el-button link type="primary" @click="handleUpdate(scope.row)" v-hasPermi="['manage:policy:edit']">修改</el-button>
+          <el-button link type="primary" @click="handleDelete(scope.row)" v-hasPermi="['manage:policy:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -89,8 +89,8 @@
         <el-form-item label="策略名称" prop="policyName">
           <el-input v-model="form.policyName" placeholder="请输入策略名称" />
         </el-form-item>
-        <el-form-item label="策略方案，如：80代表8折" prop="discount">
-          <el-input v-model="form.discount" placeholder="请输入策略方案，如：80代表8折" />
+        <el-form-item label="策略方案" prop="discount">
+          <el-input-number :min="1" :max="100" :precision="0" v-model="form.discount" placeholder="请输入策略方案" />
         </el-form-item>
       </el-form>
       <template #footer>
