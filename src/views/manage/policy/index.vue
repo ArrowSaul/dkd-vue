@@ -69,6 +69,7 @@
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
+          <el-button link type="primary" @click="getPolicyInfo(scope.row)" v-hasPermi="['manage:policy:list']">查看详情</el-button>
           <el-button link type="primary" @click="handleUpdate(scope.row)" v-hasPermi="['manage:policy:edit']">修改</el-button>
           <el-button link type="primary" @click="handleDelete(scope.row)" v-hasPermi="['manage:policy:remove']">删除</el-button>
         </template>
@@ -100,12 +101,26 @@
         </div>
       </template>
     </el-dialog>
+
+    <!-- 策略详情对话框 -->
+     <el-dialog title="策略详情" v-model="policyOpen" width="500px" append-to-body>
+      <el-form-item label="策略名称" prop="policyName">
+          <el-input v-model="form.policyName" placeholder="请输入策略名称" disabled/>
+        </el-form-item>
+      <label>包含设备：</label>
+      <el-table :data="vmList" >
+        <el-table-column label="序号" type="index" width="55" align="center" />
+        <el-table-column label="点位地址" align="center" prop="addr" show-overflow-tooltip="true"/>
+        <el-table-column label="设备编号" align="center" prop="innerCode" />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
 <script setup name="Policy">
 import { listPolicy, getPolicy, delPolicy, addPolicy, updatePolicy } from "@/api/manage/policy";
-
+import {listVm} from "@/api/manage/vm";
+import {loadAllParams} from "@/api/page";
 const { proxy } = getCurrentInstance();
 
 const policyList = ref([]);
@@ -202,6 +217,19 @@ function handleUpdate(row) {
   });
 }
 
+/** 查看策略详情 */
+const policyOpen = ref(false);
+const vmList = ref([]);
+function getPolicyInfo(row) {
+  //1. 获取策略信息
+  form.value = row;
+  //2. 根据策略id，查询设备列表
+  loadAllParams.policyId=row.policyId;
+  listVm(loadAllParams).then(response => {
+    vmList.value=response.rows;
+    policyOpen.value=true;
+  });
+}
 /** 提交按钮 */
 function submitForm() {
   proxy.$refs["policyRef"].validate(valid => {
