@@ -59,12 +59,12 @@
 
     <el-table v-loading="loading" :data="skuClassList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="主键" align="center" prop="classId" />
+      <el-table-column label="序号" type="index" width="50" align="center" prop="classId" />
       <el-table-column label="商品类型" align="center" prop="className" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['manage:skuClass:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['manage:skuClass:remove']">删除</el-button>
+          <el-button link type="primary" @click="handleUpdate(scope.row)" v-hasPermi="['manage:skuClass:edit']">修改</el-button>
+          <el-button link type="primary" @click="handleDelete(scope.row)" v-hasPermi="['manage:skuClass:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
