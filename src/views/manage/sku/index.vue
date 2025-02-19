@@ -54,6 +54,15 @@
           v-hasPermi="['manage:sku:export']"
         >导出</el-button>
       </el-col>
+      <el-col :span="1.5">
+        <el-button
+          type="warning"
+          plain
+          icon="Upload"
+          @click="handleImport"
+          v-hasPermi="['manage:sku:add']"
+        >导入</el-button>
+      </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
@@ -138,6 +147,31 @@
         </div>
       </template>
     </el-dialog>
+
+     <!-- 数据导入对话框 -->
+      <el-dialog title="数据导入" v-model="excelOpen" width="400px" append-to-body>
+        <el-upload
+          ref="uploadRef"
+          class="upload-demo"
+          :action="uploadExcelUrl"
+          :headers="headers"
+          :auto-upload="false"
+        >
+        <template #trigger>
+          <el-button type="primary">上传文件</el-button>
+        </template>
+
+        <el-button class="ml-3" type="success" @click="submitUpload">
+          上传
+        </el-button>
+
+        <template #tip>
+          <div class="el-upload__tip">
+            上传文件仅支持，xls/xlsx格式，文件大小不得超过1M
+          </div>
+        </template>
+      </el-upload>
+      </el-dialog>
   </div>
 </template>
 
@@ -146,6 +180,7 @@ import { listSku, getSku, delSku, addSku, updateSku } from "@/api/manage/sku";
 import { listSkuClass } from "@/api/manage/skuClass";
 import {loadAllParams} from "@/api/page";
 import { get } from "@vueuse/core";
+import { getToken } from "@/utils/auth";
 const { proxy } = getCurrentInstance();
 
 const skuList = ref([]);
@@ -300,6 +335,20 @@ function handleExport() {
     ...queryParams.value
   }, `sku_${new Date().getTime()}.xlsx`)
 }
+/** 打开数据导入对话框 */
+const excelOpen = ref(false);
+function handleImport() {
+  excelOpen.value = true;
+}
+/** 上传excel文件 */
+const uploadRef = ref({});
+function submitUpload() {
+  uploadRef.value.submit();
+}
+// 上传文件地址
+const uploadExcelUrl = ref(import.meta.env.VITE_APP_BASE_API + "/manage/sku/import"); 
+// 上传文件请求头
+const headers = ref({ Authorization: "Bearer " + getToken() });
 /** 查询商品类型列表 */
 const skuClassList = ref([]);
 function getSkuClassList() {
