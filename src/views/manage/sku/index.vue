@@ -9,14 +9,6 @@
           @keyup.enter="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="商品类型Id" prop="classId">
-        <el-input
-          v-model="queryParams.classId"
-          placeholder="请输入商品类型Id"
-          clearable
-          @keyup.enter="handleQuery"
-        />
-      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -67,7 +59,7 @@
 
     <el-table v-loading="loading" :data="skuList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="主键" align="center" prop="skuId" />
+      <el-table-column label="序号" type="index" width="50" align="center" prop="skuId" />
       <el-table-column label="商品名称" align="center" prop="skuName" />
       <el-table-column label="商品图片" align="center" prop="skuImage" width="100">
         <template #default="scope">
@@ -75,18 +67,28 @@
         </template>
       </el-table-column>
       <el-table-column label="品牌" align="center" prop="brandName" />
-      <el-table-column label="规格(净含量)" align="center" prop="unit" />
-      <el-table-column label="商品价格，单位分" align="center" prop="price" />
-      <el-table-column label="商品类型Id" align="center" prop="classId" />
+      <el-table-column label="规格" align="center" prop="unit" />
+      <el-table-column label="商品价格" align="center" prop="price">
+        <template #default="scope">
+          <el-tag>{{ scope.row.price/100 }}元</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="商品类型" align="center" prop="classId">
+        <template #default="scope">
+          <div v-for="item in skuClassList" :key="item.classId">
+            <span v-if="item.classId == scope.row.classId">{{ item.className }}</span>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" width="180">
         <template #default="scope">
-          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d}') }}</span>
+          <span>{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</span>
         </template>
       </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['manage:sku:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['manage:sku:remove']">删除</el-button>
+          <el-button link type="primary" @click="handleUpdate(scope.row)" v-hasPermi="['manage:sku:edit']">修改</el-button>
+          <el-button link type="primary" @click="handleDelete(scope.row)" v-hasPermi="['manage:sku:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -105,20 +107,28 @@
         <el-form-item label="商品名称" prop="skuName">
           <el-input v-model="form.skuName" placeholder="请输入商品名称" />
         </el-form-item>
-        <el-form-item label="商品图片" prop="skuImage">
-          <image-upload v-model="form.skuImage"/>
-        </el-form-item>
         <el-form-item label="品牌" prop="brandName">
           <el-input v-model="form.brandName" placeholder="请输入品牌" />
         </el-form-item>
-        <el-form-item label="规格(净含量)" prop="unit">
-          <el-input v-model="form.unit" placeholder="请输入规格(净含量)" />
+        <el-form-item label="商品价格" prop="price">
+          <el-input-number v-model="form.price" :min="0.01" :max="999.99" :precision="2" :step="0.5" placeholder="请输入商品价格" />元
         </el-form-item>
-        <el-form-item label="商品价格，单位分" prop="price">
-          <el-input v-model="form.price" placeholder="请输入商品价格，单位分" />
+        <el-form-item label="商品类型" prop="classId">
+          <!-- <el-input v-model="form.classId" placeholder="请输入商品类型" /> -->
+          <el-select v-model="form.classId" placeholder="请选择商品类型"> 
+            <el-option
+              v-for="item in skuClassList"
+              :key="item.classId"
+              :label="item.className"
+              :value="item.classId"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="商品类型Id" prop="classId">
-          <el-input v-model="form.classId" placeholder="请输入商品类型Id" />
+        <el-form-item label="规格" prop="unit">
+          <el-input v-model="form.unit" placeholder="请输入规格" />
+        </el-form-item>
+        <el-form-item label="商品图片" prop="skuImage">
+          <image-upload v-model="form.skuImage"/>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -133,7 +143,9 @@
 
 <script setup name="Sku">
 import { listSku, getSku, delSku, addSku, updateSku } from "@/api/manage/sku";
-
+import { listSkuClass } from "@/api/manage/skuClass";
+import {loadAllParams} from "@/api/page";
+import { get } from "@vueuse/core";
 const { proxy } = getCurrentInstance();
 
 const skuList = ref([]);
@@ -243,6 +255,7 @@ function handleUpdate(row) {
   const _skuId = row.skuId || ids.value
   getSku(_skuId).then(response => {
     form.value = response.data;
+    form.value.price/=100; //将价格单位由分转换为元
     open.value = true;
     title.value = "修改商品管理";
   });
@@ -252,6 +265,7 @@ function handleUpdate(row) {
 function submitForm() {
   proxy.$refs["skuRef"].validate(valid => {
     if (valid) {
+      form.value.price*=100; //将价格单位由元转换为分
       if (form.value.skuId != null) {
         updateSku(form.value).then(response => {
           proxy.$modal.msgSuccess("修改成功");
@@ -286,6 +300,13 @@ function handleExport() {
     ...queryParams.value
   }, `sku_${new Date().getTime()}.xlsx`)
 }
-
+/** 查询商品类型列表 */
+const skuClassList = ref([]);
+function getSkuClassList() {
+  listSkuClass(loadAllParams).then(response => {
+    skuClassList.value = response.rows
+  });
+}
+getSkuClassList();
 getList();
 </script>
