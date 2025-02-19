@@ -153,8 +153,12 @@
         <el-upload
           ref="uploadRef"
           class="upload-demo"
+          :on-success="handleUploadSuccess"
+          :on-error="handleUploadError"
           :action="uploadExcelUrl"
           :headers="headers"
+          :before-upload="handleBeforeUpload"
+          :limit="1"
           :auto-upload="false"
         >
         <template #trigger>
@@ -349,6 +353,72 @@ function submitUpload() {
 const uploadExcelUrl = ref(import.meta.env.VITE_APP_BASE_API + "/manage/sku/import"); 
 // 上传文件请求头
 const headers = ref({ Authorization: "Bearer " + getToken() });
+// 上传成功回调
+function handleUploadSuccess(res, file) {
+  if (res.code === 200) {
+    proxy.$modal.msgSuccess("上传excel成功");
+    excelOpen.value = false;
+    getList();
+  } else {
+    proxy.$modal.msgError(res.msg);
+  }
+  uploadRef.value.clearFiles();
+  proxy.$modal.closeLoading();
+}
+// 上传失败
+function handleUploadError() {
+  proxy.$modal.msgError("上传excel失败");
+  uploadRef.value.clearFiles();
+  proxy.$modal.closeLoading();
+}
+// 上传前校检格式
+const props = defineProps({
+  modelValue: [String, Object, Array],
+  limit: {
+    type: Number,
+    default: 1,
+  },
+  // 大小限制(MB)
+  fileSize: {
+    type: Number,
+    default: 1,
+  },
+  // 文件类型, 例如['xls', 'xlsx']
+  fileType: {
+    type: Array,
+    default: () => ["xls", "xlsx"],
+  },
+  
+});
+// 上传前loading加载
+function handleBeforeUpload(file) {
+  let isExcel = false;
+  if (props.fileType.length) {
+    let fileExtension = "";
+    if (file.name.lastIndexOf(".") > -1) {
+      fileExtension = file.name.slice(file.name.lastIndexOf(".") + 1);
+    }
+    isExcel = props.fileType.some(type => {
+      if (file.type.indexOf(type) > -1) return true;
+      if (fileExtension && fileExtension.indexOf(type) > -1) return true;
+      return false;
+    });
+  }
+  if (!isExcel) {
+    proxy.$modal.msgError(
+      `文件格式不正确, 请上传${props.fileType.join("/")}格式文件!`
+    );
+    return false;
+  }
+  if (props.fileSize) {
+    const isLt = file.size / 1024 / 1024 < props.fileSize;
+    if (!isLt) {
+      proxy.$modal.msgError(`上传excel大小不能超过 ${props.fileSize} MB!`);
+      return false;
+    }
+  }
+  proxy.$modal.loading("正在上传excel，请稍候...");
+}
 /** 查询商品类型列表 */
 const skuClassList = ref([]);
 function getSkuClassList() {
